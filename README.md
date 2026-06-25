@@ -26,6 +26,7 @@
 | 文档 | 主题 | 状态 |
 |---|---|---|
 | [`nanobot_loop_state_machine.md`](./nanobot_loop_state_machine.md) | `AgentLoop` 事件驱动状态机深度解析 | ✅ 已完成 |
+| [`nanobot_stop_and_cancel.md`](./nanobot_stop_and_cancel.md) | `/stop`、`/new` 与任务取消（CancelledError、pending queue 清理） | ✅ 已完成 |
 
 ---
 
@@ -58,6 +59,30 @@ RESTORE  → COMPACT → COMMAND ──dispatch──→ BUILD → RUN → SAVE 
 - **长任务自动续杯**：当 `max_iterations` 触发且存在活跃 `sustained goal` 时，自动构造虚拟用户消息开启新一轮。
 
 详细内容请阅读：[`nanobot_loop_state_machine.md`](./nanobot_loop_state_machine.md)
+
+---
+
+## 🔍 已完成解读：任务取消（`/stop` / `/new`）
+
+nanobot 主循环用 `create_task(_dispatch)` 异步派发消息，使 agent 在 LLM/工具执行期间仍能响应 **`/stop`**。取消链路核心为 `AgentLoop._cancel_active_tasks`：
+
+```text
+/stop 或 /new
+  → _active_tasks.pop(session_key) + task.cancel()
+  → await task（等待 _dispatch 清理完成）
+  → subagents.cancel_by_session
+  → CancelledError 经 runner.run 向上传播
+  → _dispatch 恢复 checkpoint + finally 排空 pending queue
+```
+
+要点：
+
+- **`cancel()` + `await t`**：协作式取消，必须等待 session lock 释放与 finally 清理
+- **`suppress(CancelledError, Exception)`**：控制面命令不应因被取消 task 的异常而失败
+- **checkpoint 恢复**：`/stop` 后 partial turn 上下文写入 session，避免工具结果丢失
+- **边界**：`process_direct` 路径不注册 `_active_tasks`，不受 `/stop` 影响
+
+详细内容请阅读：[`nanobot_stop_and_cancel.md`](./nanobot_stop_and_cancel.md)
 
 ---
 
