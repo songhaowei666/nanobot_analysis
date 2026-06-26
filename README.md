@@ -27,6 +27,7 @@
 |---|---|---|
 | [`nanobot_loop_state_machine.md`](./nanobot_loop_state_machine.md) | `AgentLoop` 事件驱动状态机深度解析 | ✅ 已完成 |
 | [`nanobot_stop_and_cancel.md`](./nanobot_stop_and_cancel.md) | `/stop`、`/new` 与任务取消（CancelledError、pending queue 清理） | ✅ 已完成 |
+| [`2026-06-26_消息处理与记忆压缩解读.md`](./2026-06-26_消息处理与记忆压缩解读.md) | `sender_id`、崩溃恢复、Auto Compact、Token 压缩、Replay 预归档 | ✅ 已完成 |
 
 ---
 
